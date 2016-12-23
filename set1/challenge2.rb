@@ -33,8 +33,6 @@ def xor a, b
   unpack(x.map(&:chr).join)
 end
 
-debugger
-
 def unpack thing
   thing.unpack('H*').first
 end
