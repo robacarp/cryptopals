@@ -1,6 +1,7 @@
-module Shared
+class Shared
   class StringGrader
     LETTERS =  %w|a A b B c C d D e E f F g G h H i I j J k K l L m M n N o O p P q Q r R s S t T u U v V w W x X y Y z Z |
+    LETTERS << ' '
 
     # Thanks, Cornell
     LETTER_FREQUENCY = {
@@ -13,31 +14,22 @@ module Shared
       Y: 2.11, Z: 0.07
     }
 
-    def self.grade *things, **stuff
-      new(*things, **stuff).tap {|i| i.xor_decode }
+    def self.grade string
+      new(string)
     end
 
-    attr_reader :grade, :decoded, :code
+    def inspect
+      {
+        grade: @grade,
+        code: @code
+      }.inspect
+    end
 
-    def initialize string, b64_decode: false
+    attr_reader :grade, :decoded, :code, :scores
+
+    def initialize string
       @byte_string = string
-
-      if b64_decode
-        @byte_string = [string].pack('H*')
-      end
-    end
-
-    def xor_decode
-      scores = {}
-
-      (0x00..0xff).each do |byte|
-        scores[byte] = grade_string xor_string @byte_string, byte
-      end
-
-      high_score = scores.to_a.sort {|a,b| a[1] <=> b[1]}.first
-      @code  = high_score.first
-      @grade = high_score.last
-      @decoded = xor_string @byte_string, high_score.first
+      grade_string string
     end
 
     private
@@ -60,9 +52,6 @@ module Shared
       magnitudes.inject(0.0) { |sum, e| sum + e } / magnitudes.count
     end
 
-    def xor_string string, byte
-      string.split('').map {|c| (c.ord ^ byte).chr}.join
-    end
   end
 end
 

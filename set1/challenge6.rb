@@ -31,44 +31,48 @@ We get more tech support questions for this challenge than any of the other ones
 
 require 'byebug'
 require 'base64'
-
-def hamming_distance str1, str2
-  # check to make sure that str1 is always the shorter string
-  if str1.length > str2.length
-    str1, str2 = str2, str1
-  end
-
-  # convert a string to a stream of unseperated bits
-  convert_to_binary_string = -> (str) {
-    str.split('')
-       .map(&:ord)
-       .map{|n| n.to_s(2)}
-       .map{|word| '0' * (7 - word.length) + word}
-       .join
-  }
-
-  binary_str1 = convert_to_binary_string[str1]
-  binary_str2 = convert_to_binary_string[str2]
-
-  tuples = binary_str1.split('').zip binary_str2.split('')
-
-  distance = 0
-  tuples.each do |a,b|
-    if a != b
-      distance += 1
-    end
-  end
-
-  distance
-end
+require 'matrix'
+require 'awesome_print'
+require_relative '../shared'
 
 data = Base64.decode64 File.readlines('challenge6.dat').join
 
-key_results = (2..40).map do |keysize|
-  [keysize, hamming_distance(data[0..keysize], data[keysize..(keysize*2)]) / keysize]
+print "Hamming Check: "
+if 37 == Shared::Hamming.distance('this is a test', 'wokka wokka!!!')
+  puts "OK"
+else
+  puts "NOP"
+  exit 1
 end
 
-key_length = key_results.sort_by(&:last).first.first
+key_results = (2..40).map do |keysize|
+  distance = Shared::Hamming.distance(data[0...keysize], data[keysize...(keysize*2)])
+
+  distance /= keysize
+
+  [keysize,  distance]
+end.sort_by(&:last)
+
+debugger
+key_length = key_results.last.first
+
+puts "Keysize should be 28"
+puts "Key length: #{key_length}"
+
+fatrix = data.scan(/.{#{key_length}}/)
+             .map { |s| s.split '' }
+
+matrix = Matrix[ *fatrix ].transpose
+graded_strings = matrix.row_vectors.map do |row|
+  Shared::StringGrader.grade row.to_a.join
+end
+
+key = graded_strings.map(&:code).map(&:chr).join
+puts "Key: #{key.unpack('H*').first}"
+
+decoded_message = data.split('').each.with_index.map do |character, i|
+  (character.ord ^ key[i % key.length].ord).chr
+end.join
 
 debugger
 puts 'hi'

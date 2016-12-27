@@ -9,11 +9,10 @@ Find it.
 
 require 'byebug'
 require_relative '../shared'
-include Shared
 
 strings = File.readlines 'challenge4.dat'
 scores = strings.map do |string|
-  StringGrader.grade string, b64_decode: true
+  Shared::StringGrader.grade(Shared.b64_decode(string))
 end
 
 winner = scores.sort {|a,b| a.grade <=> b.grade}.first
